@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+#include <math.h>
 #include "Lcd_1602.h"
 #include "sim800.h"
 
@@ -47,6 +48,8 @@ DMA_HandleTypeDef hdma_adc;
 
 I2C_HandleTypeDef hi2c2;
 
+TIM_HandleTypeDef htim6;
+
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
@@ -57,105 +60,53 @@ volatile uint32_t time_send_sim800 = 0;
 volatile uint32_t time_adc_u = 0;
 
 volatile uint8_t flag_adc_ready = 0;
+volatile uint8_t flag_data_ready = 0;
 volatile uint16_t adc[10] = {0,};
 volatile uint16_t data_adc[10] = {0,};
 
-uint16_t mid_value = 0;
-////
+int32_t value = 0;
+int16_t mid_value_u1 = 2010;
+int16_t mid_value_u2 = 2030;
+int16_t mid_value_u3 = 2088;
+int16_t mid_value_u4 = 1999;
+int16_t mid_value_u5 = 2000;
+int16_t mid_value_u6 = 2082;
+int16_t mid_value_i1 = 2056;
+int16_t mid_value_i2 = 2056;
+int16_t mid_value_i3 = 2056;
 //
-uint16_t last_value_max_u1 = 0;
-uint16_t last_value_min_u1 = 0;
-uint16_t max_filtered_u1 = 0;
-uint16_t min_filtered_u1 = 0;
-uint32_t u1 = 0;
+int32_t amount_u1 = 0;
+int32_t amount_u2 = 0;
+int32_t amount_u3 = 0;
+int32_t amount_u4 = 0;
+int32_t amount_u5 = 0;
+int32_t amount_u6 = 0;
+int32_t amount_i1 = 0;
+int32_t amount_i2 = 0;
+int32_t amount_i3 = 0;
 //
+int32_t amount_u1_temp = 0;
+int32_t amount_u2_temp = 0;
+int32_t amount_u3_temp = 0;
+int32_t amount_u4_temp = 0;
+int32_t amount_u5_temp = 0;
+int32_t amount_u6_temp = 0;
+int32_t amount_i1_temp = 0;
+int32_t amount_i2_temp = 0;
+int32_t amount_i3_temp = 0;
 //
-uint16_t last_value_max_u2 = 0;
-uint16_t last_value_min_u2 = 0;
-uint16_t max_filtered_u2 = 0;
-uint16_t min_filtered_u2 = 0;
-uint32_t u2 = 0;
-//
-//
-uint16_t last_value_max_u3 = 0;
-uint16_t last_value_min_u3 = 0;
-uint16_t max_filtered_u3 = 0;
-uint16_t min_filtered_u3 = 0;
-uint32_t u3 = 0;
-//
-//
-uint16_t last_value_max_u4 = 0;
-uint16_t last_value_min_u4 = 0;
-uint16_t max_filtered_u4 = 0;
-uint16_t min_filtered_u4 = 0;
-uint32_t u4 = 0;
-//
-//
-uint16_t last_value_max_u5 = 0;
-uint16_t last_value_min_u5 = 0;
-uint16_t max_filtered_u5 = 0;
-uint16_t min_filtered_u5 = 0;
-uint32_t u5 = 0;
-//
-//
-uint16_t last_value_max_u6 = 0;
-uint16_t last_value_min_u6 = 0;
-uint16_t max_filtered_u6 = 0;
-uint16_t min_filtered_u6 = 0;
-uint32_t u6 = 0;
-//
-//
-uint16_t last_value_max_i1 = 0;
-uint16_t last_value_min_i1 = 0;
-uint16_t max_filtered_i1 = 0;
-uint16_t min_filtered_i1 = 0;
-uint32_t i1 = 0;
-uint16_t i1_d = 0;
-uint32_t i1_f = 0;
-//
-uint16_t last_value_max_i2 = 0;
-uint16_t last_value_min_i2 = 0;
-uint16_t max_filtered_i2 = 0;
-uint16_t min_filtered_i2 = 0;
-uint32_t i2 = 0;
-uint16_t i2_d = 0;
-uint32_t i2_f = 0;
-//
-uint16_t last_value_max_i3 = 0;
-uint16_t last_value_min_i3 = 0;
-uint16_t max_filtered_i3 = 0;
-uint16_t min_filtered_i3 = 0;
-uint32_t i3 = 0;
-uint16_t i3_d = 0;
-uint32_t i3_f = 0;
-//
-uint16_t last_value_max_i4 = 0;
-uint16_t last_value_min_i4 = 0;
-uint16_t max_filtered_i4 = 0;
-uint16_t min_filtered_i4 = 0;
-uint32_t i4 = 0;
-uint16_t i4_d = 0;
-uint32_t i4_f = 0;
-//
-uint16_t last_value_max_i5 = 0;
-uint16_t last_value_min_i5 = 0;
-uint16_t max_filtered_i5 = 0;
-uint16_t min_filtered_i5 = 0;
-uint32_t i5 = 0;
-uint16_t i5_d = 0;
-uint32_t i5_f = 0;
-//
-uint16_t last_value_max_i6 = 0;
-uint16_t last_value_min_i6 = 0;
-uint16_t max_filtered_i6 = 0;
-uint16_t min_filtered_i6 = 0;
-uint32_t i6 = 0;
-uint16_t i6_d = 0;
-uint32_t i6_f = 0;
-//
-uint16_t value = 0;
-uint8_t index_adc_dma = 0;
+uint16_t counter_sample = 0;
+uint16_t counter_sample_temp = 0;
 
+float u1 = 0;
+float u2 = 0;
+float u3 = 0;
+float u4 = 0;
+float u5 = 0;
+float u6 = 0;
+float i1 = 0;
+float i2 = 0;
+float i3 = 0;
 
 
 
@@ -177,6 +128,7 @@ static void MX_DMA_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_ADC_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_TIM6_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -186,11 +138,26 @@ static void MX_USART2_UART_Init(void);
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
 
 	if(hadc->Instance == ADC1){
-		
 		flag_adc_ready = 1;
-		
 	}
+}
 
+
+//Timer 6
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
+        if(htim->Instance == TIM6){ //check if the interrupt comes from TIM6
+									
+						//copy adc to adc temp bufer, adc set zero;
+						for( uint8_t i = 0; i<10; i++){
+							data_adc[i] = adc[i];
+							adc[i] = 0;
+						}
+						
+						HAL_ADC_Start_DMA(&hadc, (uint32_t*)adc, 9);
+						
+						flag_adc_ready = 0;
+						flag_data_ready = 1;
+        }
 }
 
 
@@ -241,6 +208,7 @@ int main(void)
   MX_DMA_Init();
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
+  MX_TIM6_Init();
   MX_ADC_Init();
   MX_I2C2_Init();
   /* USER CODE BEGIN 2 */
@@ -249,24 +217,19 @@ int main(void)
 //  MX_DMA_Init();
 //  MX_USART1_UART_Init();
 //  MX_USART2_UART_Init();
-//  MX_SPI1_Init();
+//  MX_TIM6_Init();
 //  MX_ADC_Init();
 //  MX_I2C2_Init();
-		
-//	MX_GPIO_Init();
-//  MX_I2C2_Init();
-//  MX_DMA_Init();
-//  MX_USART1_UART_Init();
-//  MX_SPI1_Init();
-//  MX_ADC_Init();
 
 	
 	
 	//------------------------------------------
 	HAL_ADCEx_Calibration_Start(&hadc);
-	HAL_ADC_Start_DMA(&hadc, (uint32_t*)adc, 9);
+	//HAL_ADC_Start_DMA(&hadc, (uint32_t*)adc, 9);
 	//HAL_ADC_Start_IT(&hadc);  
 	
+	__HAL_TIM_CLEAR_FLAG(&htim6, TIM_SR_UIF); // очищаем флаг
+	HAL_TIM_Base_Start_IT(&htim6);
 	
 	HAL_UART_Receive_IT( &huart1, (uint8_t*) &data_uart_receive, 1);
 	
@@ -277,7 +240,6 @@ int main(void)
   char mas_char[21];
   int count=0;
 	
-	mid_value = 4096/2;
 
 	//------------------------------------------
   /* USER CODE END 2 */
@@ -289,298 +251,155 @@ int main(void)
   while (1)
   {
 		
-		if( flag_adc_ready ){
+		if( flag_data_ready ){
 			
-				HAL_ADC_Stop_DMA(&hadc); // не об�?з�?тельно
 			
-				//copy adc to adc temp bufer, adc set zero;
-				for( uint8_t i = 0; i<10; i++){
-					data_adc[i] = adc[i];
-					adc[i] = 0;
-				}
-					
-				//detect min max
 				value = data_adc[0];
-				if (value > last_value_max_u1) last_value_max_u1 = value;
-				if (value < last_value_min_u1) last_value_min_u1 = value;
-				value = data_adc[1];
-				if (value > last_value_max_u2) last_value_max_u2 = value;
-				if (value < last_value_min_u2) last_value_min_u2 = value;
-				value = data_adc[2];
-				if (value > last_value_max_u3) last_value_max_u3 = value;
-				if (value < last_value_min_u3) last_value_min_u3 = value;
-				value = data_adc[3];
-				if (value > last_value_max_u4) last_value_max_u4 = value;
-				if (value < last_value_min_u4) last_value_min_u4 = value;
-				value = data_adc[4];
-				if (value > last_value_max_u5) last_value_max_u5 = value;
-				if (value < last_value_min_u5) last_value_min_u5 = value;
-				value = data_adc[5];
-				if (value > last_value_max_u6) last_value_max_u6 = value;
-				if (value < last_value_min_u6) last_value_min_u6 = value;
+				value -= mid_value_u1;
+				amount_u1 += value*value;
 			
+				value = data_adc[1];
+				value -= mid_value_u2;
+				amount_u2 += value*value;
+			
+				value = data_adc[2];
+				value -= mid_value_u3;
+				amount_u3 += value*value;
+			
+				value = data_adc[3];
+				value -= mid_value_u4;
+				amount_u4 += value*value;
+			
+				value = data_adc[4];
+				value -= mid_value_u5;
+				amount_u5 += value*value;
+			
+				value = data_adc[5];
+				value -= mid_value_u6;
+				amount_u6 += value*value;
 			
 				value = data_adc[6];
-				if (value > last_value_max_i1) last_value_max_i1 = value;
-				if (value < last_value_min_i1) last_value_min_i1 = value;			
+				value -= mid_value_i1;
+				amount_i1 += value*value;
+			
 				value = data_adc[7];
-				if (value > last_value_max_i2) last_value_max_i2 = value;
-				if (value < last_value_min_i2) last_value_min_i2 = value;			
+				value -= mid_value_i2;
+				amount_i2 += value*value;
+			
 				value = data_adc[8];
-				if (value > last_value_max_i3) last_value_max_i3 = value;
-				if (value < last_value_min_i3) last_value_min_i3 = value;			
-//				value = data_adc[3];
-//				if (value > last_value_max_i4) last_value_max_i4 = value;
-//				if (value < last_value_min_i4) last_value_min_i4 = value;			
-//				value = data_adc[4];
-//				if (value > last_value_max_i5) last_value_max_i5 = value;
-//				if (value < last_value_min_i5) last_value_min_i5 = value;			
-//				value = data_adc[5];
-//				if (value > last_value_max_i6) last_value_max_i6 = value;
-//				if (value < last_value_min_i6) last_value_min_i6 = value;
+				value -= mid_value_i3;
+				amount_i3 += value*value;
+			
+				counter_sample++;
 				
-				
-				//  intetval > 40ms ?
-				if( ( HAL_GetTick() - time_adc_u ) > 40 ){ // intetval 40ms
-				
-				
-						//	u1	-----------------------------------------------------------------
-						max_filtered_u1 = (1 - 0.2) * max_filtered_u1 + 0.2 * last_value_max_u1;
-						min_filtered_u1 = (1 - 0.2) * min_filtered_u1 + 0.2 * last_value_min_u1;
+				//zero detector
+				if( counter_sample > 199 ){
 					
-						last_value_max_u1 = mid_value;
-						last_value_min_u1 = mid_value;
+					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
 					
-						u1 = max_filtered_u1 - min_filtered_u1;	//amplitude
-						u1 = u1 * 100;
-						u1 = u1/910;
-						if( u1 > 1 && u1 < 50){
-								u1 = u1 - 1;
-						}
-						if(u1 < 10) u1=0;
-						else u1 = u1 - 1;
-				
-						//	u2	-----------------------------------------------------------------
-						max_filtered_u2 = (1 - 0.2) * max_filtered_u2 + 0.2 * last_value_max_u2;
-						min_filtered_u2 = (1 - 0.2) * min_filtered_u2 + 0.2 * last_value_min_u2;
+					amount_u1_temp = amount_u1;
+					amount_u2_temp = amount_u2;
+					amount_u3_temp = amount_u3;
+					amount_u4_temp = amount_u4;
+					amount_u5_temp = amount_u5;
+					amount_u6_temp = amount_u6;
+					amount_i1_temp = amount_i1;
+					amount_i2_temp = amount_i2;
+					amount_i3_temp = amount_i3;
+					counter_sample_temp = counter_sample;
 					
-						last_value_max_u2 = mid_value;
-						last_value_min_u2 = mid_value;
+					amount_u1 = 0;
+					amount_u2 = 0;
+					amount_u3 = 0;
+					amount_u4 = 0;
+					amount_u5 = 0;
+					amount_u6 = 0;
+					amount_i1 = 0;
+					amount_i2 = 0;
+					amount_i3 = 0;
+					counter_sample = 0;
 					
-						u2 = max_filtered_u2 - min_filtered_u2;	//amplitude
-						u2 = u2 * 100;
-						u2 = u2/910;
-						if( u2 > 0 && u2 < 50){
-								u2 = u2 - 1;
-						}
-						if(u2 < 10) u2=0;
-						else u2 = u2 + 3;
-				
-						//	u3	-----------------------------------------------------------------
-						max_filtered_u3 = (1 - 0.2) * max_filtered_u3 + 0.2 * last_value_max_u3;
-						min_filtered_u3 = (1 - 0.2) * min_filtered_u3 + 0.2 * last_value_min_u3;
+															
+					u1 = sqrt((float)amount_u1_temp/counter_sample_temp)/3.33;
+					u2 = sqrt((float)amount_u2_temp/counter_sample_temp)/3.35;
+					u3 = sqrt((float)amount_u3_temp/counter_sample_temp)/3.36;
+					u4 = sqrt((float)amount_u4_temp/counter_sample_temp)/3.35;
+					u5 = sqrt((float)amount_u5_temp/counter_sample_temp)/3.36;
+					u6 = sqrt((float)amount_u6_temp/counter_sample_temp)/3.35;
+					i1 = sqrt((float)amount_i1_temp/counter_sample_temp)/3.33;
+					i2 = sqrt((float)amount_i2_temp/counter_sample_temp)/3.33;
+					i3 = sqrt((float)amount_i3_temp/counter_sample_temp)/3.33;
 					
-						last_value_max_u3 = mid_value;
-						last_value_min_u3 = mid_value;
-					
-						u3 = max_filtered_u3 - min_filtered_u3;	//amplitude
-						u3 = u3 * 100;
-						u3 = u3/910;
-						if( u3 > 0 && u3 < 50){
-								u3 = u3 - 1;
-						}
-						if(u3 < 10) u3=0;
-						else u3 = u3 - 0;
-				
-						//	u4	-----------------------------------------------------------------
-						max_filtered_u4 = (1 - 0.2) * max_filtered_u4 + 0.2 * last_value_max_u4;
-						min_filtered_u4 = (1 - 0.2) * min_filtered_u4 + 0.2 * last_value_min_u4;
-					
-						last_value_max_u4 = mid_value;
-						last_value_min_u4 = mid_value;
-					
-						u4 = max_filtered_u4 - min_filtered_u4;	//amplitude
-						u4 = u4 * 100;
-						u4 = u4/910;
-						if( u4 > 0 && u4 < 50){
-								u4 = u4 - 1;
-						}
-						if(u4 < 10) u4=0;
-						else u4 = u4 + 1;
-				
-						//	u5	-----------------------------------------------------------------
-						max_filtered_u5 = (1 - 0.2) * max_filtered_u5 + 0.2 * last_value_max_u5;
-						min_filtered_u5 = (1 - 0.2) * min_filtered_u5 + 0.2 * last_value_min_u5;
-					
-						last_value_max_u5 = mid_value;
-						last_value_min_u5 = mid_value;
-					
-						u5 = max_filtered_u5 - min_filtered_u5;	//amplitude
-						u5 = u5 * 100;
-						u5 = u5/910;
-						if( u5 > 0 && u5 < 50){
-								u5 = u5 - 1;
-						}
-						if(u5 < 10) u5=0;
-						else u5 = u5 + 1;
-				
-						//	u6	-----------------------------------------------------------------
-						max_filtered_u6 = (1 - 0.2) * max_filtered_u6 + 0.2 * last_value_max_u6;
-						min_filtered_u6 = (1 - 0.2) * min_filtered_u6 + 0.2 * last_value_min_u6;
-					
-						last_value_max_u6 = mid_value;
-						last_value_min_u6 = mid_value;
-					
-						u6 = max_filtered_u6 - min_filtered_u6;	//amplitude
-						u6 = u6 * 100;
-						u6 = u6/910;			
-						if( u6 > 0 && u6 < 50){
-								u6 = u6 - 1;
-						}
-						if(u6 < 10) u6=0;
-						else u6 = u6 + 1;
-						
-						
-						
-						
-						
-						//	i1	-----------------------------------------------------------------
-						max_filtered_i1 = (1 - 0.2) * max_filtered_i1 + 0.2 * last_value_max_i1;
-						min_filtered_i1 = (1 - 0.2) * min_filtered_i1 + 0.2 * last_value_min_i1;
-					
-						last_value_max_i1 = mid_value;
-						last_value_min_i1 = mid_value;
-					
-						i1 = max_filtered_i1 - min_filtered_i1;	//amplitude
-						//corect
-						if ( i1 < 45 ) i1 = 0;  
-						i1 = i1 * 100;
-						i1_d = i1/18300;
-						i1_f = i1%18300;
-						i1_f =  i1_f * 10;
-						i1_f = i1_f/18300;						
-						//	i2	-----------------------------------------------------------------
-						max_filtered_i2 = (1 - 0.2) * max_filtered_i2 + 0.2 * last_value_max_i2;
-						min_filtered_i2 = (1 - 0.2) * min_filtered_i2 + 0.2 * last_value_min_i2;
-					
-						last_value_max_i2 = mid_value;
-						last_value_min_i2 = mid_value;
-					
-						i2 = max_filtered_i2 - min_filtered_i2;	//amplitude
-						//corect
-						if ( i2 < 45 ) i2 = 0;  
-						i2 = i2 * 100;
-						i2_d = i2/18300;
-						i2_f = i2%18300;
-						i2_f =  i2_f * 10;
-						i2_f = i2_f/18300;
-												
-						//	i3	-----------------------------------------------------------------
-						max_filtered_i3 = (1 - 0.2) * max_filtered_i3 + 0.2 * last_value_max_i3;
-						min_filtered_i3 = (1 - 0.2) * min_filtered_i3 + 0.2 * last_value_min_i3;
-					
-						last_value_max_i3 = mid_value;
-						last_value_min_i3 = mid_value;
-					
-						i3 = max_filtered_i3 - min_filtered_i3;	//amplitude
-						//corect
-						if ( i3 < 45 ) i3 = 0;  
-						i3 = i3 * 100;
-						i3_d = i3/18300;
-						i3_f = i3%18300;
-						i3_f =  i3_f * 10;
-						i3_f = i3_f/18300;
-												
-//						//	i4	-----------------------------------------------------------------
-//						max_filtered_i4 = (1 - 0.2) * max_filtered_i4 + 0.2 * last_value_max_i4;
-//						min_filtered_i4 = (1 - 0.2) * min_filtered_i4 + 0.2 * last_value_min_i4;
-//					
-//						last_value_max_i4 = mid_value;
-//						last_value_min_i4 = mid_value;
-//					
-//						i4 = max_filtered_i4 - min_filtered_i4;	//amplitude
-//						//corect
-//						if ( i4 < 45 ) i4 = 0;  
-//						i4 = i4 * 100;
-//						i4_d = i4/18300;
-//						i4_f = i4%18300;
-//						i4_f =  i4_f * 10;
-//						i4_f = i4_f/18300;
-//												
-//						//	i5	-----------------------------------------------------------------
-//						max_filtered_i5 = (1 - 0.2) * max_filtered_i5 + 0.2 * last_value_max_i5;
-//						min_filtered_i5 = (1 - 0.2) * min_filtered_i5 + 0.2 * last_value_min_i5;
-//					
-//						last_value_max_i5 = mid_value;
-//						last_value_min_i5 = mid_value;
-//					
-//						i5 = max_filtered_i5 - min_filtered_i5;	//amplitude
-//						//corect
-//						if ( i5 < 45 ) i5 = 0;  
-//						i5 = i5 * 100;
-//						i5_d = i5/18300;
-//						i5_f = i5%18300;
-//						i5_f =  i5_f * 10;
-//						i5_f = i5_f/18300;
-//												
-//						//	i6	-----------------------------------------------------------------
-//						max_filtered_i6 = (1 - 0.2) * max_filtered_i6 + 0.2 * last_value_max_i6;
-//						min_filtered_i6 = (1 - 0.2) * min_filtered_i6 + 0.2 * last_value_min_i6;
-//					
-//						last_value_max_i6 = mid_value;
-//						last_value_min_i6 = mid_value;
-//					
-//						i6 = max_filtered_i6 - min_filtered_i6;	//amplitude
-//						//corect
-//						if ( i6 < 45 ) i6 = 0;  
-//						i6 = i6 * 100;
-//						i6_d = i6/18300;
-//						i6_f = i6%18300;
-//						i6_f =  i6_f * 10;
-//						i6_f = i6_f/18300;
-//						
-						
-						//
-						//sprintf(mas_char,"%4uv  %2u,%02u", u1, i1_d, i1_f);
-						//
-						
-						//
-						sprintf(mas_char,"%3u   %3u   %3u", u1, u2, u3);
-						Lcd_1602_SetPos(&hi2c2, 0, 0);
-						Lcd_1602_Write_Data(&hi2c2, (uint8_t *)mas_char);
-						//
-						//
-						sprintf(mas_char,"%3u   %3u   %3u", u4, u5, u6);
-						Lcd_1602_SetPos(&hi2c2, 0, 1);
-						Lcd_1602_Write_Data(&hi2c2, (uint8_t *)mas_char);
-						//
-						
-						//
-						sprintf(mas_char,"%2u,%01u %2u,%01u %2u,%01u ", i1_d, i1_f, i2_d, i2_f, i3_d, i3_f);
-						Lcd_1602_SetPos(&hi2c2, 0, 2);
-						Lcd_1602_Write_Data(&hi2c2, (uint8_t *)mas_char);
-						//
-//						//
-//						sprintf(mas_char,"%2u,%01u %2u,%01u %2u,%01u ", i4_d, i4_f, i5_d, i5_f, i6_d, i6_f);
-//						Lcd_1602_SetPos(&hi2c2, 0, 3);
-//						Lcd_1602_Write_Data(&hi2c2, (uint8_t *)mas_char);
-//						//
-						
-						time_adc_u = HAL_GetTick();		//next 40ms
-						
-						
-				}
-				
 
-			flag_adc_ready = 0;
-			//HAL_ADC_Start_IT(&hadc);	//запу�?тим новое аналогово-цифровое преобразование
-			HAL_ADC_Start_DMA(&hadc, (uint32_t*)adc, 9);	//запуѿтим новое аналогово-цифровое преобразование
+					//print
+					sprintf(mas_char,"%3u   %3u   %3u", (int)u1, (int)u2, (int)u3);
+					Lcd_1602_SetPos(&hi2c2, 0, 0);
+					Lcd_1602_Write_Data(&hi2c2, (uint8_t *)mas_char);
+					//
+					//
+					sprintf(mas_char,"%3u   %3u   %3u", (int)u4, (int)u5, (int)u6);
+					Lcd_1602_SetPos(&hi2c2, 0, 1);
+					Lcd_1602_Write_Data(&hi2c2, (uint8_t *)mas_char);
+					//
+//						
+//						//
+//						sprintf(mas_char,"%2u,%01u %2u,%01u %2u,%01u ", i1_d, i1_f, i2_d, i2_f, i3_d, i3_f);
+//						Lcd_1602_SetPos(&hi2c2, 0, 2);
+//						Lcd_1602_Write_Data(&hi2c2, (uint8_t *)mas_char);
+					
+					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
+				}
+			
+
+			flag_data_ready = 0;
 		}			
 		
 		
 		
+		
+		
+		
 		if( ( HAL_GetTick() - time ) > 100 ){ // intetval 1000ms = 1s
-				HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+//				HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+			
+						
+//						//	i1	-----------------------------------------------------------------
+//						max_filtered_i1 = (1 - 0.2) * max_filtered_i1 + 0.2 * last_value_max_i1;
+//						min_filtered_i1 = (1 - 0.2) * min_filtered_i1 + 0.2 * last_value_min_i1;
+//					
+//						last_value_max_i1 = mid_value;
+//						last_value_min_i1 = mid_value;
+//					
+//						i1 = max_filtered_i1 - min_filtered_i1;	//amplitude
+//						//corect
+//						if ( i1 < 45 ) i1 = 0;  
+//						i1 = i1 * 100;
+//						i1_d = i1/18300;
+//						i1_f = i1%18300;
+//						i1_f =  i1_f * 10;
+//						i1_f = i1_f/18300;						
+
+						
+//						//
+//						//sprintf(mas_char,"%4uv  %2u,%02u", u1, i1_d, i1_f);
+//						//
+//						
+//						//
+//						sprintf(mas_char,"%3u   %3u   %3u", u1, u2, u3);
+//						Lcd_1602_SetPos(&hi2c2, 0, 0);
+//						Lcd_1602_Write_Data(&hi2c2, (uint8_t *)mas_char);
+//						//
+//						//
+//						sprintf(mas_char,"%3u   %3u   %3u", u4, u5, u6);
+//						Lcd_1602_SetPos(&hi2c2, 0, 1);
+//						Lcd_1602_Write_Data(&hi2c2, (uint8_t *)mas_char);
+//						//
+//						
+//						//
+//						sprintf(mas_char,"%2u,%01u %2u,%01u %2u,%01u ", i1_d, i1_f, i2_d, i2_f, i3_d, i3_f);
+//						Lcd_1602_SetPos(&hi2c2, 0, 2);
+//						Lcd_1602_Write_Data(&hi2c2, (uint8_t *)mas_char);
+	
 			
 				time = HAL_GetTick();
 		}
@@ -592,8 +411,8 @@ int main(void)
 		if( ( HAL_GetTick() - time_init_uart ) > 40000 ){ // intetval 1000ms = 1s
 			
 				if( flag_uart_init == 0 ){
-						//init sim800
-						init_sim800_udp(&huart1);
+						
+//!!						init_sim800_udp(&huart1);
 					
 						flag_uart_init = 1;		//do not call init next time
 				}
@@ -607,7 +426,7 @@ int main(void)
 			
 				if( flag_uart_init == 1 ){
 					
-						sim800_send_udp_data( &huart1, u1, u2, u3, u4, u5, u6, i1_d, i1_f, i2_d, i2_f, i3_d, i3_f, i4_d, i4_f, i5_d, i5_f, i6_d, i6_f);
+//!!						sim800_send_udp_data( &huart1, u1, u2, u3, u4, u5, u6, i1_d, i1_f, i2_d, i2_f, i3_d, i3_f, i4_d, i4_f, i5_d, i5_f, i6_d, i6_f);
 				}
 				
 				time_send_sim800 = HAL_GetTick();
@@ -835,6 +654,36 @@ static void MX_I2C2_Init(void)
 }
 
 /**
+  * @brief TIM6 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM6_Init(void)
+{
+
+  /* USER CODE BEGIN TIM6_Init 0 */
+
+  /* USER CODE END TIM6_Init 0 */
+
+  /* USER CODE BEGIN TIM6_Init 1 */
+
+  /* USER CODE END TIM6_Init 1 */
+  htim6.Instance = TIM6;
+  htim6.Init.Prescaler = 47;
+  htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim6.Init.Period = 99;
+  htim6.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim6) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM6_Init 2 */
+
+  /* USER CODE END TIM6_Init 2 */
+
+}
+
+/**
   * @brief USART1 Initialization Function
   * @param None
   * @retval None
@@ -885,7 +734,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 38400;
+  huart2.Init.BaudRate = 115200;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
