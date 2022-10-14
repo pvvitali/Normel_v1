@@ -237,7 +237,7 @@ int main(void)
 	
   Init_lcd_1602(&hi2c2);
   lcd_led_on();
-  char mas_char[21];
+  char mas_char[25];
   int count=0;
 	
 
@@ -295,7 +295,7 @@ int main(void)
 				//zero detector
 				if( counter_sample > 199 ){
 					
-					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
+					//HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
 					
 					amount_u1_temp = amount_u1;
 					amount_u2_temp = amount_u2;
@@ -320,15 +320,15 @@ int main(void)
 					counter_sample = 0;
 					
 															
-					u1 = sqrt((float)amount_u1_temp/counter_sample_temp)/3.33;
-					u2 = sqrt((float)amount_u2_temp/counter_sample_temp)/3.35;
-					u3 = sqrt((float)amount_u3_temp/counter_sample_temp)/3.36;
-					u4 = sqrt((float)amount_u4_temp/counter_sample_temp)/3.35;
-					u5 = sqrt((float)amount_u5_temp/counter_sample_temp)/3.36;
-					u6 = sqrt((float)amount_u6_temp/counter_sample_temp)/3.35;
-					i1 = sqrt((float)amount_i1_temp/counter_sample_temp)/3.33;
-					i2 = sqrt((float)amount_i2_temp/counter_sample_temp)/3.33;
-					i3 = sqrt((float)amount_i3_temp/counter_sample_temp)/3.33;
+					u1 = sqrt((float)amount_u1_temp/counter_sample_temp)/3.31;
+					u2 = sqrt((float)amount_u2_temp/counter_sample_temp)/3.33;
+					u3 = sqrt((float)amount_u3_temp/counter_sample_temp)/3.34;
+					u4 = sqrt((float)amount_u4_temp/counter_sample_temp)/3.33;
+					u5 = sqrt((float)amount_u5_temp/counter_sample_temp)/3.34;
+					u6 = sqrt((float)amount_u6_temp/counter_sample_temp)/3.33;
+					i1 = sqrt((float)amount_i1_temp/counter_sample_temp)/64.94;
+					i2 = sqrt((float)amount_i2_temp/counter_sample_temp)/64.94;
+					i3 = sqrt((float)amount_i3_temp/counter_sample_temp)/64.94;
 					
 
 					//print
@@ -343,11 +343,11 @@ int main(void)
 					//
 //						
 //						//
-//						sprintf(mas_char,"%2u,%01u %2u,%01u %2u,%01u ", i1_d, i1_f, i2_d, i2_f, i3_d, i3_f);
-//						Lcd_1602_SetPos(&hi2c2, 0, 2);
-//						Lcd_1602_Write_Data(&hi2c2, (uint8_t *)mas_char);
+					sprintf(mas_char,"%4.1f %4.1f %4.1f", i1, i2, i3);
+					Lcd_1602_SetPos(&hi2c2, 0, 2);
+					Lcd_1602_Write_Data(&hi2c2, (uint8_t *)mas_char);
 					
-					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
+					//HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
 				}
 			
 
@@ -360,46 +360,8 @@ int main(void)
 		
 		
 		if( ( HAL_GetTick() - time ) > 100 ){ // intetval 1000ms = 1s
-//				HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+				HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 			
-						
-//						//	i1	-----------------------------------------------------------------
-//						max_filtered_i1 = (1 - 0.2) * max_filtered_i1 + 0.2 * last_value_max_i1;
-//						min_filtered_i1 = (1 - 0.2) * min_filtered_i1 + 0.2 * last_value_min_i1;
-//					
-//						last_value_max_i1 = mid_value;
-//						last_value_min_i1 = mid_value;
-//					
-//						i1 = max_filtered_i1 - min_filtered_i1;	//amplitude
-//						//corect
-//						if ( i1 < 45 ) i1 = 0;  
-//						i1 = i1 * 100;
-//						i1_d = i1/18300;
-//						i1_f = i1%18300;
-//						i1_f =  i1_f * 10;
-//						i1_f = i1_f/18300;						
-
-						
-//						//
-//						//sprintf(mas_char,"%4uv  %2u,%02u", u1, i1_d, i1_f);
-//						//
-//						
-//						//
-//						sprintf(mas_char,"%3u   %3u   %3u", u1, u2, u3);
-//						Lcd_1602_SetPos(&hi2c2, 0, 0);
-//						Lcd_1602_Write_Data(&hi2c2, (uint8_t *)mas_char);
-//						//
-//						//
-//						sprintf(mas_char,"%3u   %3u   %3u", u4, u5, u6);
-//						Lcd_1602_SetPos(&hi2c2, 0, 1);
-//						Lcd_1602_Write_Data(&hi2c2, (uint8_t *)mas_char);
-//						//
-//						
-//						//
-//						sprintf(mas_char,"%2u,%01u %2u,%01u %2u,%01u ", i1_d, i1_f, i2_d, i2_f, i3_d, i3_f);
-//						Lcd_1602_SetPos(&hi2c2, 0, 2);
-//						Lcd_1602_Write_Data(&hi2c2, (uint8_t *)mas_char);
-	
 			
 				time = HAL_GetTick();
 		}
@@ -412,7 +374,7 @@ int main(void)
 			
 				if( flag_uart_init == 0 ){
 						
-//!!						init_sim800_udp(&huart1);
+						init_sim800_udp(&huart1);
 					
 						flag_uart_init = 1;		//do not call init next time
 				}
@@ -426,7 +388,7 @@ int main(void)
 			
 				if( flag_uart_init == 1 ){
 					
-//!!						sim800_send_udp_data( &huart1, u1, u2, u3, u4, u5, u6, i1_d, i1_f, i2_d, i2_f, i3_d, i3_f, i4_d, i4_f, i5_d, i5_f, i6_d, i6_f);
+						sim800_send_udp_data( &huart1, u1, u2, u3, u4, u5, u6, i1, i2, i3);
 				}
 				
 				time_send_sim800 = HAL_GetTick();
