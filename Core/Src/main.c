@@ -107,6 +107,28 @@ float u6 = 0;
 float i1 = 0;
 float i2 = 0;
 float i3 = 0;
+//
+float u1_average = 0;
+float u2_average = 0;
+float u3_average = 0;
+float u4_average = 0;
+float u5_average = 0;
+float u6_average = 0;
+float i1_average = 0;
+float i2_average = 0;
+float i3_average = 0;
+uint16_t counter_average = 0;
+//
+float u1_average_gsm = 0;
+float u2_average_gsm = 0;
+float u3_average_gsm = 0;
+float u4_average_gsm = 0;
+float u5_average_gsm = 0;
+float u6_average_gsm = 0;
+float i1_average_gsm = 0;
+float i2_average_gsm = 0;
+float i3_average_gsm = 0;
+uint16_t counter_average_gsm = 0;
 
 
 
@@ -320,34 +342,27 @@ int main(void)
 					counter_sample = 0;
 					
 															
-					u1 = sqrt((float)amount_u1_temp/counter_sample_temp)/3.31;
-					u2 = sqrt((float)amount_u2_temp/counter_sample_temp)/3.33;
-					u3 = sqrt((float)amount_u3_temp/counter_sample_temp)/3.34;
-					u4 = sqrt((float)amount_u4_temp/counter_sample_temp)/3.33;
-					u5 = sqrt((float)amount_u5_temp/counter_sample_temp)/3.34;
-					u6 = sqrt((float)amount_u6_temp/counter_sample_temp)/3.33;
+					u1 = sqrt((float)amount_u1_temp/counter_sample_temp)/3.30;
+					u2 = sqrt((float)amount_u2_temp/counter_sample_temp)/3.32;
+					u3 = sqrt((float)amount_u3_temp/counter_sample_temp)/3.32;
+					u4 = sqrt((float)amount_u4_temp/counter_sample_temp)/3.32;
+					u5 = sqrt((float)amount_u5_temp/counter_sample_temp)/3.32;
+					u6 = sqrt((float)amount_u6_temp/counter_sample_temp)/3.31;
 					i1 = sqrt((float)amount_i1_temp/counter_sample_temp)/64.94;
 					i2 = sqrt((float)amount_i2_temp/counter_sample_temp)/64.94;
 					i3 = sqrt((float)amount_i3_temp/counter_sample_temp)/64.94;
 					
+					u1_average += u1;
+					u2_average += u2;
+					u3_average += u3;
+					u4_average += u4;
+					u5_average += u5;
+					u6_average += u6;
+					i1_average += i1;
+					i2_average += i2;
+					i3_average += i3;					
+					counter_average++;
 
-					//print
-					sprintf(mas_char,"%3u   %3u   %3u", (int)u1, (int)u2, (int)u3);
-					Lcd_1602_SetPos(&hi2c2, 0, 0);
-					Lcd_1602_Write_Data(&hi2c2, (uint8_t *)mas_char);
-					//
-					//
-					sprintf(mas_char,"%3u   %3u   %3u", (int)u4, (int)u5, (int)u6);
-					Lcd_1602_SetPos(&hi2c2, 0, 1);
-					Lcd_1602_Write_Data(&hi2c2, (uint8_t *)mas_char);
-					//
-//						
-//						//
-					sprintf(mas_char,"%4.1f %4.1f %4.1f", i1, i2, i3);
-					Lcd_1602_SetPos(&hi2c2, 0, 2);
-					Lcd_1602_Write_Data(&hi2c2, (uint8_t *)mas_char);
-					
-					//HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
 				}
 			
 
@@ -359,11 +374,61 @@ int main(void)
 		
 		
 		
-		if( ( HAL_GetTick() - time ) > 100 ){ // intetval 1000ms = 1s
-				HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+		if( ( HAL_GetTick() - time ) > 1000 ){ // intetval 1000ms = 1s
 			
+					HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 			
-				time = HAL_GetTick();
+					u1_average /= counter_average;
+					u2_average /= counter_average;
+					u3_average /= counter_average;
+					u4_average /= counter_average;
+					u5_average /= counter_average;
+					u6_average /= counter_average;
+					i1_average /= counter_average;
+					i2_average /= counter_average;
+					i3_average /= counter_average;
+	
+					
+					u1_average_gsm += u1_average;
+					u2_average_gsm += u2_average;
+					u3_average_gsm += u3_average;
+					u4_average_gsm += u4_average;
+					u5_average_gsm += u5_average;
+					u6_average_gsm += u6_average;
+					i1_average_gsm += i1_average;
+					i2_average_gsm += i2_average;
+					i3_average_gsm += i3_average;					
+					counter_average_gsm++;			
+					
+			
+					//print
+					sprintf(mas_char,"%3u   %3u   %3u", (int)(u1_average + 0.5), (int)(u2_average + 0.5), (int)(u3_average + 0.5) );
+					Lcd_1602_SetPos(&hi2c2, 0, 0);
+					Lcd_1602_Write_Data(&hi2c2, (uint8_t *)mas_char);
+					//
+					//
+					sprintf(mas_char,"%3u   %3u   %3u", (int)(u4_average + 0.5), (int)(u5_average + 0.5), (int)(u6_average + 0.5) );
+					Lcd_1602_SetPos(&hi2c2, 0, 1);
+					Lcd_1602_Write_Data(&hi2c2, (uint8_t *)mas_char);
+					//
+					//
+					sprintf(mas_char,"%4.1f %4.1f %4.1f", i1_average, i2_average, i3_average);
+					Lcd_1602_SetPos(&hi2c2, 0, 2);
+					Lcd_1602_Write_Data(&hi2c2, (uint8_t *)mas_char);
+					
+					u1_average = 0;
+					u2_average = 0;
+					u3_average = 0;
+					u4_average = 0;
+					u5_average = 0;
+					u6_average = 0;
+					i1_average = 0;
+					i2_average = 0;
+					i3_average = 0;		
+					counter_average = 0;
+					
+			
+					time = HAL_GetTick();
 		}
 		
 		
@@ -388,7 +453,28 @@ int main(void)
 			
 				if( flag_uart_init == 1 ){
 					
-						sim800_send_udp_data( &huart1, u1, u2, u3, u4, u5, u6, i1, i2, i3);
+						u1_average_gsm /= counter_average_gsm;
+						u2_average_gsm /= counter_average_gsm;
+						u3_average_gsm /= counter_average_gsm;
+						u4_average_gsm /= counter_average_gsm;
+						u5_average_gsm /= counter_average_gsm;
+						u6_average_gsm /= counter_average_gsm;
+						i1_average_gsm /= counter_average_gsm;
+						i2_average_gsm /= counter_average_gsm;
+						i3_average_gsm /= counter_average_gsm;
+										
+						sim800_send_udp_data( &huart1, (int)(u1_average_gsm + 0.5), (int)(u2_average_gsm + 0.5), (int)(u3_average_gsm + 0.5), (int)(u4_average_gsm + 0.5), (int)(u5_average_gsm + 0.5), (int)(u6_average_gsm + 0.5), i1_average_gsm, i2_average_gsm, i3_average_gsm);
+																
+						u1_average_gsm = 0;
+						u2_average_gsm = 0;
+						u3_average_gsm = 0;
+						u4_average_gsm = 0;
+						u5_average_gsm = 0;
+						u6_average_gsm = 0;
+						i1_average_gsm = 0;
+						i2_average_gsm = 0;
+						i3_average_gsm = 0;		
+						counter_average_gsm = 0;
 				}
 				
 				time_send_sim800 = HAL_GetTick();

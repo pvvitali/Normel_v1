@@ -33,8 +33,8 @@ void init_sim800_udp(UART_HandleTypeDef *huart){
 
 }
 
-void sim800_send_udp_data(UART_HandleTypeDef *huart, uint8_t u1, uint8_t u2, uint8_t u3,
-																											uint8_t u4, uint8_t u5, uint8_t u6,
+void sim800_send_udp_data(UART_HandleTypeDef *huart, uint16_t u1, uint16_t u2, uint16_t u3,
+																											uint16_t u4, uint16_t u5, uint16_t u6,
 																											float i1, float i2, float i3) {
 	
 //"00001-00220-00230-00240-00220-00220-00220-002.1-002.2-002.3-002.4-002.5-002.6-00000-00000-00000-00000#"
